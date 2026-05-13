@@ -12,6 +12,9 @@ namespace MIF2.Models.MIFMap
         private int _height;
         private Cell[,] _map;
 
+        public int Width => _width;
+        public int Height => _height;
+
         public Map(int width, int height)
         {
             _width = width;
@@ -121,6 +124,11 @@ namespace MIF2.Models.MIFMap
         internal Cell GetCell(Coordinates coordinates)
         {
             return _map[coordinates.X, coordinates.Y];
+        }
+
+        internal Cell GetCell(int x, int y)
+        {
+            return _map[x, y];
         }
     }
 }

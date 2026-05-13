@@ -14,6 +14,7 @@ namespace MIF2.Models
 {
     class SimulationCycle
     {
+        private int _seed = 0;
         private Map _map;
         private Thread _cycle = null;
         private GenomeReader _genomeReader;
@@ -123,9 +124,12 @@ namespace MIF2.Models
         {
             if (_cycle is null)
             {
+                SaveParameters();
+
                 _cycle = new Thread(() =>
                 {
                     PlaceAgentsOnMap();
+                    
 
                     while (Agents.Count > 0)
                     {
@@ -230,6 +234,47 @@ namespace MIF2.Models
             throw new NotImplementedException();
         }
 
-        
+        private void SaveParameters()
+        {
+            Directory.CreateDirectory("Screens");
+            MIFEnvironment env = _map.GetCell(0, 0).MIFEnvironment;
+
+            var parameters = new SimulationParameters
+            {
+                StartedAt = DateTime.Now,
+                RandomSeed = _seed,
+
+                MapWidth = _map.Width,
+                MapHeight = _map.Height,
+                InitialAgentsCount = Agents.Count,
+
+                // Параметры среды берутся из любой клетки — они однородные.
+                // Когда среда станет неоднородной, эту часть надо переделать.
+                
+                Illumination = env.Illumination,
+                Mutagenicity = env.Mutagenicity,
+                Density = env.Density,
+                Temperature = env.Temperature,
+
+                DefaultGenomeSize = Constraints.DefaultGenomeSize,
+                MaxGenomeSize = Constraints.MaxGenomeSize,
+                MaxAgentAge = Constraints.MaxAgentAge,
+                DefaultAgentIntegrity = Constraints.DefaultAgentIntegrity,
+                DefaultAgentEnergy = Constraints.DefaultAgentEnergy,
+
+                BasePhotosynthesisEnergy = Constraints.BasePhotosynthesisEnergy,
+                BaseEverydayEnergy = Constraints.BaseEverydayEnergy,
+                BaseAttackEnergy = Constraints.BaseAttackEnergy,
+                BaseMitosisEnergy = Constraints.BaseMitosisEnergy,
+                BaseMoveEnergy = Constraints.BaseMoveEnergy,
+                BaseDamage = Constraints.BaseDamage,
+
+                SaveEveryNTicks = Constraints.SaveEveryNTicks
+            };
+
+            parameters.SaveToFile("Screens\\simulation_params.json");
+        }
+
+
     }
 }
