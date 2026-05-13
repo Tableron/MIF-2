@@ -14,7 +14,7 @@ namespace MIF2.Models
 {
     class SimulationCycle
     {
-        private int _seed = 0;
+        private int _seed;
         private Map _map;
         private Thread _cycle = null;
         private GenomeReader _genomeReader;
@@ -42,6 +42,10 @@ namespace MIF2.Models
 
         public void InitialSimulation(int countAgents)
         {
+            _seed = (int)DateTime.Now.Ticks;
+            _seed = 42;
+            Randomizer.Initialize(_seed);
+
             StartCountAgents = countAgents;
             CycleCounter = 0;
             Agent agent;
@@ -242,7 +246,7 @@ namespace MIF2.Models
             var parameters = new SimulationParameters
             {
                 StartedAt = DateTime.Now,
-                RandomSeed = _seed,
+                RandomSeed = Randomizer.Seed,
 
                 MapWidth = _map.Width,
                 MapHeight = _map.Height,

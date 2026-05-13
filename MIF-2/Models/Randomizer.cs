@@ -2,47 +2,46 @@
 
 namespace MIF2.Models
 {
-    class Randomizer
+    public class Randomizer
     {
-        private static Random random = null;
-        private static readonly object balanceLock = new object();
+        private static Random _random;
+        private static readonly object _lock = new object();
+        private static int _seed;
 
-        private int _current;
+        public static int Seed => _seed;
 
-        public Randomizer()
+        public static void Initialize(int seed)
         {
-            if (random == null)
+            lock (_lock)
             {
-                random = new Random();
+                _seed = seed;
+                _random = new Random(seed);
             }
         }
 
-
-        public Randomizer(int seed)
+        public Randomizer()
         {
-            if (random == null)
+            if (_random == null)
             {
-                _current = seed;
-                random = new Random(seed);
+                throw new InvalidOperationException(
+                    "Randomizer.Initialize(seed) must be called before any Randomizer is used.");
             }
         }
 
         public int Next()
         {
-            lock (balanceLock)
+            lock (_lock)
             {
-                _current = random.Next();
-                return _current;
+                return _random.Next();
             }
         }
 
-        public int Next(int mod)
+        public int Next(int max)
         {
-            lock (balanceLock)
+            lock (_lock)
             {
-                _current = random.Next();
-                return _current % mod;
-            } 
+                return _random.Next(max);
+            }
         }
     }
 }
