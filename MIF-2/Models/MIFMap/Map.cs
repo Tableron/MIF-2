@@ -56,7 +56,7 @@ namespace MIF2.Models.MIFMap
             Randomizer rnd = new Randomizer();
             foreach (Agent agent in agents)
             {
-                agent.Coordinates = new Coordinates(rnd.Next() % _width, rnd.Next() % _height);
+                agent.Coordinates = new Coordinates(rnd.Next(_width), rnd.Next(_height));
                 _map[agent.Coordinates.X, agent.Coordinates.Y].MIFObject = agent;
                 agent.AddMap(this);
             }

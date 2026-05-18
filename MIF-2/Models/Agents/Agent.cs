@@ -138,6 +138,11 @@ namespace MIF2.Models.Agents
             _genome.Jump(delta);
         }
 
+        public static void ResetIdCounter()
+        {
+            _count = 0;
+        }
+
         public override string ToString()
         {
             return _genome.ToString();

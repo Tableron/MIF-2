@@ -43,8 +43,10 @@ namespace MIF2.Models
         public void InitialSimulation(int countAgents)
         {
             _seed = (int)DateTime.Now.Ticks;
-            _seed = 42;
+            // _seed = 42;
             Randomizer.Initialize(_seed);
+
+            Agent.ResetIdCounter();
 
             StartCountAgents = countAgents;
             CycleCounter = 0;
@@ -132,56 +134,71 @@ namespace MIF2.Models
 
                 _cycle = new Thread(() =>
                 {
-                    PlaceAgentsOnMap();
-                    
-
-                    while (Agents.Count > 0)
+                    try
                     {
-                        if (QueueInstructionUI.Count < Constraints.MaxSizeQueueInstruction)
+                        PlaceAgentsOnMap();
+
+                        while (Agents.Count > 0)
                         {
-                            for (int i = 0; i < Agents.Count; i++)
+                            if (QueueInstructionUI.Count < Constraints.MaxSizeQueueInstruction)
                             {
-                                Agent agent = Agents[i];
-
-                                if(agent.CanLive())
+                                for (int i = 0; i < Agents.Count; i++)
                                 {
-                                    _genomeReader.ExecuteGenome(agent);
-                                    agent.NextCycle();
+                                    Agent agent = Agents[i];
 
-                                    if(_colorAlgorithm.NeedUpdateColor(CycleCounter))
+                                    if (agent.CanLive())
                                     {
-                                        UpdateColor(agent);
+                                        _genomeReader.ExecuteGenome(agent);
+                                        agent.NextCycle();
+
+                                        if (_colorAlgorithm.NeedUpdateColor(CycleCounter))
+                                        {
+                                            UpdateColor(agent);
+                                        }
                                     }
+                                    else
+                                    {
+                                        _deadAgents.Add(agent);
+                                    }
+
                                 }
-                                else
+
+                                foreach (Agent deadAgent in _deadAgents)
                                 {
-                                    _deadAgents.Add(agent);
+                                    Agents.Remove(deadAgent);
+                                    _map.RemoveMIFObject(deadAgent.Coordinates);
+                                    ErasDeadAgent(deadAgent);
                                 }
-                                
+                                _deadAgents.Clear();
+
+                                QueueInstructionUI.Enqueue(new UIUpdate(
+                                    CycleCounter,
+                                    Agents.Count,
+                                    CycleCounter % 100 == 0));
+
+                                if (CycleCounter % Constraints.SaveEveryNTicks == 0)
+                                {
+                                    ScreenAgents();
+                                }
+
+                                CycleCounter++;
                             }
 
-                            foreach (Agent deadAgent in _deadAgents)
-                            {
-                                Agents.Remove(deadAgent);
-                                _map.RemoveMIFObject(deadAgent.Coordinates);
-                                ErasDeadAgent(deadAgent);
-                            }
-                            _deadAgents.Clear();
-
-                            QueueInstructionUI.Enqueue(new UIUpdate(
-                                CycleCounter,
-                                Agents.Count,
-                                CycleCounter % 100 == 0));
-
-                            if (CycleCounter % Constraints.SaveEveryNTicks == 0)
-                            {
-                                ScreenAgents();
-                            }
-
-                            CycleCounter++;
                         }
-
                     }
+                    catch (ThreadAbortException)
+                    {
+                        // Намеренная остановка через Thread.Abort
+                    }
+                    catch (Exception ex)
+                    {
+                        string logPath = "Screens\\error.log";
+                        Directory.CreateDirectory("Screens");
+                        File.AppendAllText(logPath,
+                            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Тик {CycleCounter}: {ex.GetType().Name}: {ex.Message}\n" +
+                            $"{ex.StackTrace}\n\n");
+                    }
+
                 });
 
                 _cycle.Start();
